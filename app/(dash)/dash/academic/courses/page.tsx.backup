@@ -1,0 +1,385 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import {
+  BookOpen,
+  Plus,
+  Search,
+  Filter,
+  Download,
+  Edit,
+  Trash2,
+  Eye,
+  Users,
+  Clock,
+  Award,
+  Building2,
+  User,
+  Calendar,
+  AlertCircle,
+  Save,
+  X,
+  GraduationCap,
+  Database
+} from "lucide-react"
+
+// Import database utility
+import { coursesDB, DatabaseRecord } from "@/lib/database"
+
+// Types
+interface Course extends DatabaseRecord {
+  courseCode: string
+  courseName: string
+  description: string
+  creditHours: number
+  contactHours: number
+  department: string
+  level: 'Certificate' | 'Diploma' | 'Degree' | 'Postgraduate'
+  semester: 'Semester 1' | 'Semester 2' | 'Both Semesters' | 'Year Long'
+  prerequisites: string[]
+  instructor: string
+  status: 'Active' | 'Inactive' | 'Under Development'
+  enrolledStudents: number
+  maxCapacity: number
+  fees: number
+  academicYear: string
+}
+
+// Initial data to seed the database
+const initialCourses: Omit<Course, 'id' | 'createdAt' | 'updatedAt'>[] = [
+  {
+    courseCode: 'BUSI101',
+    courseName: 'Introduction to Business',
+    description: 'Fundamental concepts of business operations, management principles, and entrepreneurship basics for first-year students.',
+    creditHours: 3,
+    contactHours: 4,
+    department: 'Business Studies',
+    level: 'Certificate',
+    semester: 'Semester 1',
+    prerequisites: [],
+    instructor: 'Dr. James Kila',
+    status: 'Active',
+    enrolledStudents: 45,
+    maxCapacity: 50,
+    fees: 1200,
+    academicYear: '2024'
+  },
+  {
+    courseCode: 'IT201',
+    courseName: 'Database Systems',
+    description: 'Design, implementation, and management of relational databases including SQL, normalization, and database administration.',
+    creditHours: 4,
+    contactHours: 6,
+    department: 'Information Technology',
+    level: 'Diploma',
+    semester: 'Semester 2',
+    prerequisites: ['IT101', 'IT102'],
+    instructor: 'Ms. Sarah Natera',
+    status: 'Active',
+    enrolledStudents: 32,
+    maxCapacity: 35,
+    fees: 1800,
+    academicYear: '2024'
+  },
+  {
+    courseCode: 'ENG301',
+    courseName: 'Electrical Power Systems',
+    description: 'Advanced study of electrical power generation, transmission, distribution systems and renewable energy integration.',
+    creditHours: 5,
+    contactHours: 8,
+    department: 'Engineering',
+    level: 'Degree',
+    semester: 'Both Semesters',
+    prerequisites: ['ENG201', 'ENG202', 'MATH201'],
+    instructor: 'Eng. Peter Mekere',
+    status: 'Active',
+    enrolledStudents: 28,
+    maxCapacity: 30,
+    fees: 2500,
+    academicYear: '2024'
+  },
+  {
+    courseCode: 'HLTH151',
+    courseName: 'Community Health Practice',
+    description: 'Principles and practices of community health promotion, disease prevention, and public health intervention strategies.',
+    creditHours: 3,
+    contactHours: 5,
+    department: 'Health Sciences',
+    level: 'Certificate',
+    semester: 'Semester 1',
+    prerequisites: ['HLTH101'],
+    instructor: 'Dr. Mary Temu',
+    status: 'Active',
+    enrolledStudents: 38,
+    maxCapacity: 40,
+    fees: 1500,
+    academicYear: '2024'
+  },
+  {
+    courseCode: 'AGRI202',
+    courseName: 'Sustainable Agriculture',
+    description: 'Modern sustainable farming techniques, crop rotation, organic farming, and environmental impact assessment.',
+    creditHours: 4,
+    contactHours: 6,
+    department: 'Agriculture',
+    level: 'Diploma',
+    semester: 'Year Long',
+    prerequisites: ['AGRI101'],
+    instructor: 'Mr. John Wambi',
+    status: 'Under Development',
+    enrolledStudents: 0,
+    maxCapacity: 25,
+    fees: 1600,
+    academicYear: '2024'
+  },
+  {
+    courseCode: 'BUSI401',
+    courseName: 'Strategic Management',
+    description: 'Advanced strategic planning, competitive analysis, organizational development, and leadership in business environments.',
+    creditHours: 4,
+    contactHours: 5,
+    department: 'Business Studies',
+    level: 'Degree',
+    semester: 'Semester 2',
+    prerequisites: ['BUSI301', 'BUSI302', 'BUSI303'],
+    instructor: 'Dr. James Kila',
+    status: 'Active',
+    enrolledStudents: 22,
+    maxCapacity: 25,
+    fees: 2200,
+    academicYear: '2024'
+  }
+]
+
+const departments = ['Business Studies', 'Information Technology', 'Engineering', 'Health Sciences', 'Agriculture']
+const instructors = ['Dr. James Kila', 'Ms. Sarah Natera', 'Eng. Peter Mekere', 'Dr. Mary Temu', 'Mr. John Wambi']
+
+export default function CoursesPage() {
+  // State management
+  const [courses, setCourses] = useState<Course[]>([])
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterDepartment, setFilterDepartment] = useState('all')
+  const [filterLevel, setFilterLevel] = useState('all')
+  const [filterStatus, setFilterStatus] = useState('all')
+
+  // Form state
+  const [form, setForm] = useState({
+    courseCode: '',
+    courseName: '',
+    description: '',
+    creditHours: 3,
+    contactHours: 4,
+    department: '',
+    level: 'Certificate' as const,
+    semester: 'Semester 1' as const,
+    prerequisites: [] as string[],
+    instructor: '',
+    status: 'Active' as const,
+    enrolledStudents: 0,
+    maxCapacity: 30,
+    fees: 1000,
+    academicYear: '2024'
+  })
+
+  const [prerequisiteInput, setPrerequisiteInput] = useState('')
+
+  // Load data from database
+  useEffect(() => {
+    const loadCourses = async () => {
+      try {
+        const savedCourses = await coursesDB.getAll()
+
+        // If no data exists, initialize with default data
+        if (savedCourses.length === 0) {
+          const defaultCourses = []
+          for (const course of initialCourses) {
+            const newCourse = await coursesDB.create(course)
+            defaultCourses.push(newCourse)
+          }
+          setCourses(defaultCourses)
+        } else {
+          setCourses(savedCourses)
+        }
+      } catch (error) {
+        console.error('Error loading courses:', error)
+        setCourses([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadCourses()
+  }, [])
+
+  // Calculated statistics
+  const stats = {
+    totalCourses: courses.length,
+    activeCourses: courses.filter(c => c.status === 'Active').length,
+    totalEnrolled: courses.reduce((sum, c) => sum + c.enrolledStudents, 0),
+    totalCapacity: courses.reduce((sum, c) => sum + c.maxCapacity, 0),
+    averageEnrollment: Math.round((courses.reduce((sum, c) => sum + c.enrolledStudents, 0) / courses.length) * 10) / 10
+  }
+
+  // CRUD Operations with database persistence
+  const handleAdd = async () => {
+    try {
+      const newCourse = await coursesDB.create(form)
+      setCourses([...courses, newCourse])
+      resetForm()
+      setDialogOpen(false)
+    } catch (error) {
+      console.error('Error creating course:', error)
+      alert('Error creating course. Please try again.')
+    }
+  }
+
+  const handleEdit = (course: Course) => {
+    setEditingCourse(course)
+    setForm({
+      courseCode: course.courseCode,
+      courseName: course.courseName,
+      description: course.description,
+      creditHours: course.creditHours,
+      contactHours: course.contactHours,
+      department: course.department,
+      level: course.level,
+      semester: course.semester,
+      prerequisites: course.prerequisites,
+      instructor: course.instructor,
+      status: course.status,
+      enrolledStudents: course.enrolledStudents,
+      maxCapacity: course.maxCapacity,
+      fees: course.fees,
+      academicYear: course.academicYear
+    })
+    setDialogOpen(true)
+  }
+
+  const handleUpdate = async () => {
+    if (editingCourse) {
+      try {
+        const updatedCourse = await coursesDB.update(editingCourse.id, form)
+        if (updatedCourse) {
+          setCourses(courses.map(c =>
+            c.id === editingCourse.id ? updatedCourse : c
+          ))
+          setEditingCourse(null)
+          resetForm()
+          setDialogOpen(false)
+        }
+      } catch (error) {
+        console.error('Error updating course:', error)
+        alert('Error updating course. Please try again.')
+      }
+    }
+  }
+
+  const handleDelete = async (id: number) => {
+    if (confirm('Are you sure you want to delete this course? This action cannot be undone.')) {
+      try {
+        const success = await coursesDB.delete(id)
+        if (success) {
+          setCourses(courses.filter(c => c.id !== id))
+        } else {
+          alert('Error deleting course. Please try again.')
+        }
+      } catch (error) {
+        console.error('Error deleting course:', error)
+        alert('Error deleting course. Please try again.')
+      }
+    }
+  }
+
+  const handleExport = () => {
+    try {
+      const dataStr = JSON.stringify(courses, null, 2)
+      const dataBlob = new Blob([dataStr], { type: 'application/json' })
+      const url = URL.createObjectURL(dataBlob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `courses_export_${new Date().toISOString().split('T')[0]}.json`
+      link.click()
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error exporting data:', error)
+      alert('Error exporting data. Please try again.')
+    }
+  }
+
+  const resetForm = () => {
+    setForm({
+      courseCode: '',
+      courseName: '',
+      description: '',
+      creditHours: 3,
+      contactHours: 4,
+      department: '',
+      level: 'Certificate',
+      semester: 'Semester 1',
+      prerequisites: [],
+      instructor: '',
+      status: 'Active',
+      enrolledStudents: 0,
+      maxCapacity: 30,
+      fees: 1000,
+      academicYear: '2024'
+    })
+    setPrerequisiteInput('')
+  }
+
+  // Prerequisite management
+  const addPrerequisite = () => {
+    if (prerequisiteInput.trim() && !form.prerequisites.includes(prerequisiteInput.trim())) {
+      setForm({
+        ...form,
+        prerequisites: [...form.prerequisites, prerequisiteInput.trim().toUpperCase()]
+      })
+      setPrerequisiteInput('')
+    }
+  }
+
+  const removePrerequisite = (prereq: string) => {
+    setForm({
+      ...form,
+      prerequisites: form.prerequisites.filter(p => p !== prereq)
+    })
+  }
+
+  // Filter functions
+  const filteredCourses = courses.filter(course => {
+    const matchesSearch = course.courseName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         course.courseCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         course.instructor.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesDepartment = filterDepartment === 'all' || course.department === filterDepartment
+    const matchesLevel = filterLevel === 'all' || course.level === filterLevel
+    const matchesStatus = filterStatus === 'all' || course.status === filterStatus
+    return matchesSearch && matchesDepartment && matchesLevel && matchesStatus
+  })
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="flex items-center gap-2 text-lg">
+          <Database className="h-6 w-6 animate-pulse" />
+          Loading courses...
+        </div>
+      </div>
+    )
+  }
+
+// ... existing code ... <rest of the component JSX>

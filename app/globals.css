@@ -1,0 +1,81 @@
+/* Tailwind v3 directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 240 10% 95%;
+  --foreground: 220 10% 15%;
+  --card: 0 0% 100%;
+  --card-foreground: 220 10% 15%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 10% 15%;
+  --primary: 217 100% 50%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 40% 98%;
+  --secondary-foreground: 220 10% 15%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 220 8% 46%;
+  --accent: 210 40% 96%;
+  --accent-foreground: 220 10% 15%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 217 100% 50%;
+  --radius: 0.5rem;
+
+  /* Custom ERP colors */
+  --erp-sidebar: 210 20% 98%;
+  --erp-sidebar-active: 217 100% 50%;
+  --erp-topnav: 0 0% 100%;
+  --erp-subnav: 217 100% 50%;
+  --erp-tabs: 14 100% 57%;
+  --erp-content: 0 0% 100%;
+}
+
+/* ===== NPIPNG ERP theme (light neutral canvas, white panels) ===== */
+:root {
+  /* App look & feel (matches your screenshot) */
+  --erp-canvas: #f5f6f8;      /* page background (soft neutral) */
+  --erp-link: #2563eb;        /* blue-600 */
+  --erp-link-hover: #1d4ed8;  /* blue-700 */
+  --erp-primary: #16a34a;     /* green-600 */
+  --erp-warning: #f59e0b;     /* amber-500 */
+  --erp-danger: #dc2626;      /* red-600 */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root { --erp-canvas: #0c0c0c; }
+}
+
+/* Base page */
+html, body, #__next { height: 100%; }
+
+body {
+  background: var(--erp-canvas);
+  /* Use standard Tailwind utilities rather than custom color tokens */
+  @apply antialiased text-neutral-900 dark:text-neutral-100;
+}
+
+/* Links = blue accent like the sample UI */
+a { color: var(--erp-link); }
+a:hover { color: var(--erp-link-hover); }
+
+/* Reusable panel style (white card with subtle border) */
+.panel {
+  background: #fff;
+  /* Use real Tailwind utilities only */
+  @apply border border-gray-200 rounded-md shadow-sm;
+}
+
+/* Optional helpers for button colors (raw CSS) */
+.btn-primary  { background: var(--erp-primary); color: #fff; }
+.btn-primary:hover { filter: brightness(0.95); }
+
+.btn-warning  { background: var(--erp-warning); color: #111827; }
+.btn-danger   { background: var(--erp-danger);  color: #fff; }
+
+/* Dense tables like ERP screens */
+.table-compact td,
+.table-compact th { @apply py-2 px-3; }

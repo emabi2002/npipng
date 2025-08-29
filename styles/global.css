@@ -1,0 +1,16 @@
+:root {
+  /* canvas + cards similar to your screenshot */
+  --erp-canvas: 240 240 245;           /* soft neutral background */
+}
+
+/* shadcn tokens: set primary to green, links to blue, warnings/destructive as in your UI */
+:root {
+  --primary: 22 163 74;    /* green-600 */
+  --primary-foreground: 255 255 255;
+  --destructive: 220 38 38;   /* red-600 */
+  --warning: 234 179 8;       /* amber-500 */
+}
+
+/* link blue accent */
+a { color: rgb(37 99 235); }            /* blue-600 */
+a:hover { color: rgb(29 78 216); }      /* blue-700 */
